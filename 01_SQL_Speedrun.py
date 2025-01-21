@@ -1,5 +1,145 @@
 """
 
+1. Find and delete duplicates.
+
+Ans.
+
+first method using CTE:
+
+
+
+WITH CTE_Duplicates AS (
+    SELECT 
+        Email,
+        ROW_NUMBER() OVER (PARTITION BY Email ORDER BY UserID) AS RowNum
+    FROM 
+        UsersTable
+)
+SELECT 
+    Email
+FROM 
+    CTE_Duplicates
+WHERE 
+    RowNum > 1;
+
+
+Delete: (You cannot directly use cte for delete in sql server)
+
+
+WITH CTE_Duplicates AS (
+    SELECT 
+        Email,
+        ROW_NUMBER() OVER (PARTITION BY Email ORDER BY UserID) AS RowNum
+    FROM 
+        UsersTable 
+)
+DELETE 
+FROM Users
+WHERE UserID IN (
+    SELECT UserID
+    FROM CTE_Duplicates
+    WHERE RowNum > 1
+);
+
+
+
+
+
+
+    
+second method using Group By:
+    
+
+SELECT 
+    Email, 
+    COUNT(*) AS DuplicateCount
+FROM 
+    Users -- Replace with your table name
+GROUP BY 
+    Email
+HAVING 
+    COUNT(*) > 1;
+
+
+Delete:
+
+WITH DuplicateEmails AS (
+    SELECT 
+        Email, 
+        COUNT(*) AS DuplicateCount
+    FROM 
+        Users -- Replace with your table name
+    GROUP BY 
+        Email
+    HAVING 
+        COUNT(*) > 1
+)
+DELETE FROM Users
+WHERE UserID NOT IN (
+    SELECT MIN(UserID)
+    FROM Users
+    GROUP BY Email
+);
+
+
+
+
+------------------------------------------------------------------------
+
+Nth highest salary
+
+WITH RankedSalaries AS (
+    SELECT 
+        Salary,
+        DENSE_RANK() OVER (ORDER BY Salary DESC) AS SalaryRank
+    FROM Employees
+)
+SELECT Salary
+FROM RankedSalaries
+WHERE SalaryRank = 4;
+
+
+
+SELECT DISTINCT Salary
+FROM Users
+ORDER BY Salary DESC
+OFFSET 3 ROWS 
+FETCH NEXT 1 ROW ONLY;
+
+
+
+------------------------------------------------------------------------
+
+Running sum in SQL
+
+
+SELECT 
+    EmployeeID,
+    Salary,
+    SUM(Salary) OVER (ORDER BY EmployeeID) AS RunningSum
+FROM 
+    Employees
+ORDER BY 
+    EmployeeID;
+
+    
+
+
+    SELECT 
+    EmployeeID,
+    Salary,
+    SUM(Salary) OVER (PARTITION BY EmployeeID ORDER BY EmployeeID) AS RunningSum
+FROM 
+    Employees
+ORDER BY 
+    EmployeeID;
+
+    
+
+    
+-------------------------------------------------------------------------
+
+
 -------------------------------------------------------------------------
 
 SELECT TOP 10 
